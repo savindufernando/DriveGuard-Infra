@@ -3,7 +3,9 @@ version: "3.8"
 services:
   # ─── DZ (Dangerous Zone) API ────────────────────────────────────
   dz-api:
-    image: savindufernando/fyp-dz-api:latest
+    build:
+      context: ./RealTime-DangerousZone-Prediction
+      dockerfile: Dockerfile
     container_name: driveguard-dz
     restart: unless-stopped
     environment:
@@ -13,7 +15,9 @@ services:
 
   # ─── TSR (Traffic Sign Recognition) API ─────────────────────────
   tsr-api:
-    image: savindufernando/fyp-tsr-api:latest
+    build:
+      context: ./Traffic-Sign-Recognition
+      dockerfile: Dockerfile
     container_name: driveguard-tsr
     restart: unless-stopped
     environment:
@@ -23,7 +27,9 @@ services:
 
   # ─── Fusion Layer API ───────────────────────────────────────────
   fusion-api:
-    image: savindufernando/fyp-fusion-api:latest
+    build:
+      context: ./FusionLayer
+      dockerfile: Dockerfile
     container_name: driveguard-fusion
     restart: unless-stopped
     environment:

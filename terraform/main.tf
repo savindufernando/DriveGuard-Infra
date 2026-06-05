@@ -16,6 +16,14 @@ resource "aws_security_group" "driveguard_sg" {
   }
 
   ingress {
+    description = "HTTP Ingress"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
     description = "DZ API"
     from_port   = 8000
     to_port     = 8000
@@ -55,9 +63,42 @@ resource "aws_security_group" "driveguard_sg" {
   }
 }
 
+resource "aws_iam_role" "ssm_role" {
+  name = "driveguard_ssm_role"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "ec2.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "ssm_policy" {
+  role       = aws_iam_role.ssm_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
+resource "aws_iam_instance_profile" "ssm_profile" {
+  name = "driveguard_ssm_profile"
+  role = aws_iam_role.ssm_role.name
+}
+
+resource "aws_key_pair" "deployer" {
+  key_name   = "driveguard-deployer-key"
+  public_key = file("C:/Users/ASUS/.ssh/id_ed25519.pub")
+}
+
 resource "aws_instance" "k3s_server" {
-  ami           = "ami-0c7217cdde317cfec" # Ubuntu 22.04 LTS us-east-1
-  instance_type = "t3.micro"              # Free tier eligible
+  ami                  = "ami-0c7217cdde317cfec" # Ubuntu 22.04 LTS us-east-1
+  instance_type        = "t3.micro"              # Free tier eligible
+  iam_instance_profile = aws_iam_instance_profile.ssm_profile.name
+  key_name             = aws_key_pair.deployer.key_name
 
   vpc_security_group_ids = [aws_security_group.driveguard_sg.id]
   
