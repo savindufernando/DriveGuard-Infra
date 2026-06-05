@@ -1,0 +1,76 @@
+version: "3.8"
+
+services:
+  # ─── MySQL Database ─────────────────────────────────────────────
+  mysql:
+    image: mysql:8.0
+    container_name: driveguard-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: driveguard_blackspots
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # ─── DZ (Dangerous Zone) API ────────────────────────────────────
+  dz-api:
+    image: savindufernando/fyp-dz-api:latest
+    container_name: driveguard-dz
+    restart: unless-stopped
+    environment:
+      PYTHONUNBUFFERED: "1"
+    ports:
+      - "8000:8000"
+
+  # ─── TSR (Traffic Sign Recognition) API ─────────────────────────
+  tsr-api:
+    image: savindufernando/fyp-tsr-api:latest
+    container_name: driveguard-tsr
+    restart: unless-stopped
+    environment:
+      PYTHONUNBUFFERED: "1"
+    ports:
+      - "8001:8001"
+
+  # ─── Fusion Layer API ───────────────────────────────────────────
+  fusion-api:
+    image: savindufernando/fyp-fusion-api:latest
+    container_name: driveguard-fusion
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      PYTHONUNBUFFERED: "1"
+      MYSQL_HOST: mysql
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root
+      MYSQL_DB: driveguard_blackspots
+      TSR_URL: "http://tsr-api:8001"
+      DZ_URL: "http://dz-api:8000"
+    ports:
+      - "8002:8002"
+
+  # ─── Nginx Reverse Proxy (Port 80 → Fusion API) ────────────────
+  nginx:
+    image: nginx:alpine
+    container_name: driveguard-nginx
+    restart: unless-stopped
+    depends_on:
+      - fusion-api
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+
+volumes:
+  mysql_data:
