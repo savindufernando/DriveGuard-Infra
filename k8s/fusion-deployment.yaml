@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fusion-api
+  namespace: default
+  labels:
+    app: fusion-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fusion-api
+  template:
+    metadata:
+      labels:
+        app: fusion-api
+    spec:
+      containers:
+      - name: fusion-api
+        image: yourdockerhub/fusion-api:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8002
+        env:
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        - name: MYSQL_HOST
+          value: "mysql-service"
+        - name: MYSQL_USER
+          value: "root"
+        - name: MYSQL_PASSWORD
+          value: "root"
+        - name: MYSQL_DB
+          value: "driveguard_blackspots"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "300m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fusion-service
+  namespace: default
+spec:
+  type: NodePort
+  selector:
+    app: fusion-api
+  ports:
+  - port: 8002
+    targetPort: 8002
+    nodePort: 8002

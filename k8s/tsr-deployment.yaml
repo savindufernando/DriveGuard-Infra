@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tsr-api
+  namespace: default
+  labels:
+    app: tsr-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tsr-api
+  template:
+    metadata:
+      labels:
+        app: tsr-api
+    spec:
+      containers:
+      - name: tsr-api
+        image: yourdockerhub/tsr-api:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8001
+        env:
+        - name: PYTHONUNBUFFERED
+          value: "1"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tsr-service
+  namespace: default
+spec:
+  type: NodePort
+  selector:
+    app: tsr-api
+  ports:
+  - port: 8001
+    targetPort: 8001
+    nodePort: 8001
