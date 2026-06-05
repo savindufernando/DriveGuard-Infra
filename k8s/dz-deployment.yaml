@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: dz-api
-        image: yourdockerhub/dz-api:latest  # GitHub Actions will update this
+        image: savindufernando/fyp-dz-api:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8000

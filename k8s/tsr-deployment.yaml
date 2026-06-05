@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: tsr-api
-        image: yourdockerhub/tsr-api:latest
+        image: savindufernando/fyp-tsr-api:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8001
