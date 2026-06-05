@@ -32,6 +32,10 @@ spec:
           value: "root"
         - name: MYSQL_DB
           value: "driveguard_blackspots"
+        - name: TSR_URL
+          value: "http://tsr-service:8001"
+        - name: DZ_URL
+          value: "http://dz-service:8000"
         resources:
           requests:
             memory: "128Mi"
