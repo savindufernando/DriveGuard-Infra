@@ -1,0 +1,27 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: mysql-seed-job
+  namespace: default
+  annotations:
+    # Run this job every time we push (to ensure seed data is there)
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  template:
+    spec:
+      containers:
+      - name: seeder
+        # Use an image that has both curl and mysql client
+        image: ubuntu:22.04
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+          apt-get update && apt-get install -y curl mysql-client &&
+          curl -sL https://raw.githubusercontent.com/savindufernando/DriveGuard-Infra/master/database/init.sql -o /tmp/init.sql &&
+          echo "Waiting for mysql-service..." &&
+          until mysql -h mysql-service -u root -proot -e "SELECT 1"; do sleep 3; done &&
+          echo "Importing init.sql..." &&
+          mysql -h mysql-service -u root -proot driveguard_blackspots < /tmp/init.sql &&
+          echo "Database seeded successfully!"
+      restartPolicy: OnFailure
